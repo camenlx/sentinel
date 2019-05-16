@@ -16,7 +16,10 @@ sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), 'lib'))
 import config
 import zeroone_config
 
-from builtins import input
+try:
+    from builtins import input
+except ImportError:
+    from __builtin__ import input
 
 try:
     from colorama import init
