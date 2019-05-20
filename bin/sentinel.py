@@ -18,6 +18,10 @@ import random
 from scheduler import Scheduler
 import argparse
 
+# ensure another instance of Sentinel pointing at the same config
+# is not currently running
+mutex_key = 'SENTINEL_RUNNING_' + config.zeroone_conf
+
 
 # sync zerooned gobject list with our local relational DB backend
 def perform_zerooned_object_sync(zerooned):
@@ -188,7 +192,8 @@ def main():
 
 def signal_handler(signum, frame):
     print("Got a signal [%d], cleaning up..." % (signum))
-    Transient.delete('SENTINEL_RUNNING')
+    #Transient.delete('SENTINEL_RUNNING')
+    Transient.delete(mutex_key)
     sys.exit(1)
 
 
@@ -197,22 +202,27 @@ def cleanup():
 
 
 def process_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-b', '--bypass-scheduler',
-                        action='store_true',
-                        help='Bypass scheduler and sync/vote immediately',
-                        dest='bypass')
+    #parser = argparse.ArgumentParser()
+    parser = config.get_argparse()
+    #parser.add_argument('-b', '--bypass-scheduler',
+    #                    action='store_true', default=False, required=False,
+    #                    help='Bypass scheduler and sync/vote immediately',
+    #                    dest='bypass')
     args = parser.parse_args()
+    #option, args = parser.parse_known_args()
 
     return args
+    #return option
 
 
-if __name__ == '__main__':
+def entrypoint():
+    # ensure another instance of Sentinel pointing at the same config
+    # is not currently running
+    mutex_key = 'SENTINEL_RUNNING_' + config.zeroone_conf
+
     atexit.register(cleanup)
     signal.signal(signal.SIGINT, signal_handler)
 
-    # ensure another instance of Sentinel is not currently running
-    mutex_key = 'SENTINEL_RUNNING'
     # assume that all processes expire after 'timeout_seconds' seconds
     timeout_seconds = 90
 
@@ -227,3 +237,7 @@ if __name__ == '__main__':
     main()
 
     Transient.delete(mutex_key)
+
+
+if __name__ == '__main__':
+    entrypoint()

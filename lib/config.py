@@ -1,6 +1,7 @@
 """
     Set up defaults and read sentinel.conf
 """
+import argparse
 import sys
 import os
 from zeroone_config import ZeroOneConfig
@@ -10,21 +11,58 @@ default_sentinel_config = os.path.normpath(
 )
 sentinel_config_file = os.environ.get('SENTINEL_CONFIG', default_sentinel_config)
 sentinel_cfg = ZeroOneConfig.tokenize(sentinel_config_file)
+
 sentinel_version = "1.2.0"
 min_zerooned_proto_version_with_sentinel_ping = 70207
 
+def get_argparse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, required=False)
+    parser.add_argument('--rpc-port', type=int, required=False)
+    parser.add_argument('--repair', action='store_true', default=False, required=False)
+    parser.add_argument('--sentinel', action='store_true', default=False, required=False)
+    parser.add_argument('-b', '--bypass-scheduler',
+                        action='store_true', default=False, required=False,
+                        help='Bypass scheduler and sync/vote immediately',
+                        dest='bypass')
+    return parser
+
+def get_args():
+    parser = get_argparse()
+
+    try:
+        args = parser.parse_args()
+    except:
+        # We are inside tests
+        parser.add_argument('folder')
+        args = parser.parse_args()
+
+    return args
 
 def get_zeroone_conf():
-    if sys.platform == 'win32':
-        zeroone_conf = os.path.join(os.getenv('APPDATA'), "ZeroOneCore/zeroone.conf")
+    args = get_args()
+
+    if args.config:
+        zeroone_conf = args.config
     else:
-        home = os.environ.get('HOME')
+        zeroone_conf = ''
+        zeroone_conf = sentinel_cfg.get('zeroone_conf', zeroone_conf)
+        # print zeroone_conf
+        if not zeroone_conf:
+            home = os.environ.get('HOME')
+            if home is not None:
+                if sys.platform == 'darwin':
+                    zeroone_conf = os.path.join(home, "Library/Application Support/ZeroOneCore/zeroone.conf")
+                else:
+                    zeroone_conf = os.path.join(home, ".zeroonecore/zeroone.conf")
+            else:
+            #if sys.platform == 'win32':
+                home = os.getenv('APPDATA')
+                if home is not None:
+                    zeroone_conf = os.path.join(home, "ZeroOneCore\\zeroone.conf")
+                else:
+                    zeroone_conf = 'zeroone.conf'
 
-        zeroone_conf = os.path.join(home, ".zeroonecore/zeroone.conf")
-        if sys.platform == 'darwin':
-            zeroone_conf = os.path.join(home, "Library/Application Support/ZeroOneCore/zeroone.conf")
-
-    zeroone_conf = sentinel_cfg.get('zeroone_conf', zeroone_conf)
 
     return zeroone_conf
 

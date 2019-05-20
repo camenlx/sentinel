@@ -54,7 +54,6 @@ def run_sentinel():
             logger.error(str(e))
             logger.error(traceback.format_exc())
             logger.error('--------------------')
-        
         time.sleep(60) # Wait for a minute
 
 def fix_masternode(data_folder):
@@ -75,13 +74,12 @@ def fix_masternode(data_folder):
         for filename in os.listdir(data_folder):
             if filename in ('wallet.dat', 'zeroone.conf'):
                 continue
-            
+
             realpath = os.path.join(data_folder, filename)
             if os.path.isfile(realpath):
                 os.remove(realpath)
             elif os.path.isdir(realpath):
                 shutil.rmtree(realpath)
-            
             print('\t{}'.format(filename))
 
         print(colored('Done removing', 'green'))
@@ -152,7 +150,7 @@ def fix_masternode(data_folder):
         logger.error(str(e))
         logger.error(traceback.format_exc())
         logger.error('--------------------')
-    
+
 # @https://stackoverflow.com/questions/24582233/python-flush-input-before-raw-input
 def flush_input():
     try:
@@ -178,7 +176,7 @@ def menu():
     print('\t1. Start sentinel')
     print('\t2. Fix wallet and masternode')
 
-    global menu_option 
+    global menu_option
     menu_option = 0
 
     # No PyInput means no auto-start if no command line option was given, sry!
@@ -188,14 +186,12 @@ def menu():
                 menu_option = int(input('Please write 1 or 2 and press [ENTER]: '))
             except:
                 pass
-                
         return menu_option
 
     print('')
-    
 
     def on_release(key):
-        global menu_option 
+        global menu_option
 
         try:
             if key.char in ('1', '2'):
@@ -234,7 +230,7 @@ if __name__ == '__main__':
     hdlr = logging.FileHandler('sentinel.log')
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     hdlr.setFormatter(formatter)
-    logger.addHandler(hdlr) 
+    logger.addHandler(hdlr)
     logger.setLevel(logging.INFO)
 
     if os.path.isfile(config.sentinel_config_file):
@@ -243,9 +239,11 @@ if __name__ == '__main__':
     print(colored('Using zeroone.conf: {}'.format(config.zeroone_conf), 'green'))
 
     option = menu()
-    if option == 1: 
+    if option == 1:
         run_sentinel()
-    elif option == 2: 
+    elif option == 2:
         # Use default data folder
         data_folder = os.path.dirname(config.zeroone_conf)
         fix_masternode(data_folder)
+
+
